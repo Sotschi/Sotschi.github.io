@@ -1,8 +1,7 @@
-<!-- Copyright (c) 2015 Jordan Turley, CSGO Win Big. All Rights Reserved. -->
 <!DOCTYPE html>
 <html>
 <head>
-	<title>CSGO Win Big</title>
+	<title>Support</title>
 
 	<!-- jQuery -->
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -21,6 +20,59 @@
 
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script src="script.js"></script>
+
+	<script>
+	$(function () {
+		var loading = false;
+		$('#support-form').on('submit', function () {
+			var name = $('#name').val(),
+				email = $('#email').val(),
+				steamProfileLink = $('#steam-profile').val(),
+				desc = $('#desc').val();
+
+			var shouldReturnEarly = false;
+
+			$('.field').each(function (key, value) {
+				var $field = $(value);
+
+				if ($field.val().length === 0) {
+					$field.css('border', '1px solid red');
+				} else {
+					$field.css('border', '1px solid rgb(204, 204, 204)');
+				}
+			});
+
+			if (shouldReturnEarly) {
+				return false;
+			}
+
+			if (loading) {
+				return false;
+			}
+
+			$('#submit-button').html('Loading&hellip;');
+			loading = true;
+
+			$.post('php/support-ticket.php', {
+				name: name,
+				email: email,
+				steamProfileLink: steamProfileLink,
+				desc: desc
+			}, function (jsonObj) {
+				handleJsonResponse(jsonObj, function (data) {
+					loading = false;
+					$('#submit-button').html('Submit');
+
+					var message = data['message'];
+
+					successMsg(message);
+				});
+			}, 'json');
+
+			return false;
+		});
+	});
+	</script>
 </head>
 <body>
 	<div class="navbar navbar-default navbar-static-top">
@@ -56,7 +108,7 @@
 						</a>
 					</li>
 					<li class="logout" style="display: none;">
-						<p class="navbar-btn" style="margin-right: 10px;">
+						<p class="navbar-btn">
 							<a href="php/SteamAuthentication/steamauth/logout.php" class="btn btn-danger">Logout</a>
 						</p>
 					</li>
@@ -65,128 +117,37 @@
 		</div>
 	</div>
 
-	<!-- Sound effects -->
-	<div>
-		<audio src="sounds/gun-sound.mp3" id="gun-sound"></audio>
-	</div>
-
-	<!-- <h1>NOTE: The site is undergoing maintenance. Please bear with us.</h1> -->
-
 	<div class="container" id="main-container">
 		<div class="row main-row">
-			<div class="col-sm-3">
-				<div style="padding-top: 10px; margin-bottom: 20px;">
-					<div id="topleft-menu">Menu</div>
-					<div class="topleft-link-wrapper logout" style="display: none;">
-						<button class="topleft-link btn btn-primary btn-block" id="change-trade-url-btn"><span class="glyphicon glyphicon-pencil"></span> Change Trade URL</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-info btn-block" data-toggle="modal" data-target="#about-modal"><span class="glyphicon glyphicon-list-alt"></span> About/How it Works</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-warning btn-block" id="support-btn"><span class="glyphicon glyphicon-question-sign"></span> Support</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-default btn-block" id="donate-btn"><span class="glyphicon glyphicon-usd"></span> Donate</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-success btn-block" id="history-btn"><span class="glyphicon glyphicon-list"></span> History</button>
-					</div>
-				</div>
-				<div class="bg" style="text-align: center; margin-bottom: 20px;">
-					<h4 style="padding: 0px; margin: 10px 0px;">Previous winner:</h4>
-					<img src="" id="prev-winner-pic" style="width: 150px; height: 150px; border-radius: 5px;">
-					<br>
-					<h4 id="prev-winner-name" style="margin-bottom: "></h4>
-					<h4>
-						Win: <span id="prev-winner-amnt"></span>
-						<br>
-						Chance: <span id="prev-winner-chance"></span>
-					</h4>
-				</div>
-				<div class="bg" style="margin-bottom: 20px;">
-					<div id="chatbox">
-						<div id="chatmessages">Loading chat, please wait&hellip;</div>
-					</div>
-					<input id="chat-input" style="width: 100%; display: none;" placeholder="Send message (press 'Enter' to send)">
-				</div>
-			</div>
-			<div class="col-sm-9">
-				<h2 class="bg" style="padding: 10px; padding-bottom: 0px; margin-top: 10px; margin-bottom: 20px; height: 100%;">
-					As many of you know, Steam has now added a requirement for mobile confirmations when sending trades. So, CSGO Win Big will be down for a couple days, while we edit the bot for this. But, we will be back up soon!
-					<hr>
-					Welcome to <span style="font-weight: bold; /* color: yellow; */">CSGO Win Big</span>! Try your luck and deposit items, and see if you can win big! Good luck and have fun!
+			<div class="col-sm-12">
+				<div class="bg" style="padding: 10px;">
+					<div style="text-align: center; font-size: 50px;">Support</div>
+					If you have experienced some sort of problem, such as your item not showing up in the pot, or not receiving your payout after you have won, then submit a support ticket here, and we will work to fix your problem. After submitting a ticket, you can expect a response within 24 to 48 hours.
 					<br><br>
-					<a href="https://steamcommunity.com/openid/login?openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=checkid_setup&openid.return_to=http%3A%2F%2Fwww.csgowinbig.com%2Fphp%2Fsteam-login-handle.php&openid.realm=http%3A%2F%2Fwww.csgowinbig.com&openid.ns.sreg=http%3A%2F%2Fopenid.net%2Fextensions%2Fsreg%2F1.1&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select" class="btn btn-lg btn-success" id="login-main" style="display: none; margin-bottom: 10px;">
-						<img src="images/steam-logo.png" style="height: 1em;"> Login for your chance to win!
-					</a>
-					<button class="btn btn-lg btn-block btn-success deposit-btn" id="deposit-main" style="display: none; margin-bottom: 10px;">
-						<img src="images/steam-logo.png" style="height: 1em;"> Deposit skins for your chance to win!
-					</button>
-				</h2>
-				<div style="width: 100%; margin-bottom: 20px;">
-					<table style="width: 100%">
-						<tr>
-							<td style="width: 25%; padding-left: 0px; padding-right: 5px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Minimum Deposit:
-									<br>
-									<div class="info">$0.20</div>
-								</div>
-							</td>
-							<td style="width: 25%; padding-left: 5px; padding-right: 5px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Total Games Played:
-									<br>
-									<div class="info" id="total-games-played">&hellip;</div>
-								</div>
-							</td>
-							<td style="width: 25%; padding-left: 5px; padding-right: 5px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Total Money Won:
-									<br>
-									<div class="info" id="total-money-won">&hellip;</div>
-								</div>
-							</td>
-							<td style="width: 25%; padding-left: 5px; padding-right: 0px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Biggest Pot Ever:
-									<br>
-									<div class="info" id="biggest-pot-ever">&hellip;</div>
-								</div>
-							</td>
-						</tr>
-					</table>
-				</div>
-				<div class="bg" style="padding: 5px; margin-bottom: 20px;">
-					<div id="pot-items-price" style="display: none; position: relative;">
-						<div class="row">
-							<div class="col-sm-4">
-								<canvas id="items-canvas" width="250" height="250"></canvas>
-								<br>
-								<table cellpadding="0" style="position: absolute; text-align: center; vertical-align: middle; width: 250px; height: 250px; top: 0px; font-size: 35px;">
-									<tr>
-										<td style="padding: 0px;">
-											<span id="pot-items"></span>/60
-											<br>
-											<span id="pot-price"></span>
-											<br>
-											<span id="time-left"></span>
-										</td>
-									</tr>
-								</table>
-							</div>
-							<div class="col-sm-7" style="height: 250px; overflow-x: auto; margin-left: 20px;">
-								<h3 style="text-align: center; margin: 0px; margin-bottom: 5px;">Players:</h3>
-								<table id="users-deposited-table" style="width: 100%;"></table>
-							</div>
+					<form id="support-form">
+						<div class="form-group">
+							<label for="name">Your Name</label>
+							<input class="form-control field" id="name" placeholder="name">
 						</div>
-						<hr style="border-top: 1px solid #777;">
-					</div>
-					<div id="pot">&nbsp;loading&hellip;</div>
+						<div class="form-group">
+							<label for="email">Your Email Address</label>
+							<input type="email" class="form-control field" id="email" placeholder="email">
+						</div>
+						<div class="form-group">
+							<label for="steam-profile">Link to your Steam Profile</label>
+							<input class="form-control field" id="steam-profile" placeholder="steam profile url">
+						</div>
+						<div class="form-group">
+							<label for="desc">Please describe your issue in detail (if you are missing items, please list them here in detail, with the name, quality, any stickers, etc&hellip;):</label>
+							<textarea class="form-control field" id="desc" style="height: 100px;" placeholder="your issue"></textarea>
+						</div>
+						<button type="submit" class="btn btn-success btn-lg" id="submit-button">Submit</button>
+					</form>
 				</div>
 			</div>
 		</div>
+	</div>
+
 	<div class="modal fade" id="about-modal" role="dialog" tabindex="-1">
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">

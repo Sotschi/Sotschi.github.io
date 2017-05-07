@@ -1,8 +1,7 @@
-<!-- Copyright (c) 2015 Jordan Turley, CSGO Win Big. All Rights Reserved. -->
 <!DOCTYPE html>
 <html>
 <head>
-	<title>CSGO Win Big</title>
+	<title>History</title>
 
 	<!-- jQuery -->
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -21,6 +20,182 @@
 
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script src="script.js"></script>
+
+	<style type="text/css">
+	body {
+		color: white;
+	}
+
+	.history-elem {
+		position: relative;
+		margin-left: 50px;
+		margin-right: 50px;
+		margin-bottom: 1em;
+		border: 1px solid white;
+	}
+	
+	.history-img {
+		position: absolute;
+		left: 10px;
+		top: 10px;
+
+		width: 80px;
+		height: 80px;
+
+		border-radius: 5px;
+	}
+
+	.history-name {
+		position: absolute;
+		top: 10px;
+		left: 105px;
+
+		font-size: 20px;
+	}
+
+	.history-price-wrapper {
+		position: absolute;
+		top: 50px;
+		left: 105px;
+	}
+
+	.history-chance-wrapper {
+		position: absolute;
+
+		top: 70px;
+		left: 105px;
+	}
+
+	.history-all-items {
+		margin-top: 100px;
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+
+	.history-item-img {
+		width: 80px;
+		height: 80px;
+		margin-right: 5px;
+	}
+
+	#loading {
+		text-align: center;
+		font-size: 20px;
+	}
+
+	#load-more {
+		text-align: center;
+		margin-left: auto;
+		margin-right: auto;
+		margin-bottom: 2em;
+	}
+
+	#history-header {
+		text-align: center;
+	}
+	</style>
+
+	<script>
+	$(function () {
+		loadHistory(true);
+
+		$('#load-more').on('click', function () {
+			loadHistory(false);
+		});
+	});
+
+	var historyCount = 0;
+	var loading = false;
+	function loadHistory (first) {
+		if (!first) {
+			$('#load-more').html('loading&hellip;');
+		}
+
+		if (loading) {
+			return;
+		}
+
+		loading = true;
+
+		$.getJSON('php/get-history.php', {'count': historyCount}, function (jsonObj) {
+			handleJsonResponse(jsonObj, function (data) {
+				loading = false;
+
+				var rounds = data['rounds'];
+				
+				if (rounds.length === 0 && first) {
+					$('#loading').text('There is no history to show.');
+					return;
+				} else if (rounds.length === 0) {
+					swal('There is no more history to show.');
+					$('#load-more').css('display', 'none');
+					return;
+				}
+
+				$('#loading').css('display', 'none');
+
+				historyCount += rounds.length;
+
+				for (var i1 = 0; i1 < rounds.length; i1++) {
+					var round = rounds[i1];
+
+					var id = round['id'],
+						winnerInfo = round['winnerInfo'],
+						userPutInPrice = round['userPutInPrice'],
+						potPrice = round['potPrice'],
+						allItemsJson = round['allItemsJson'];
+
+					var percentageChance = (userPutInPrice / potPrice * 100).toFixed(2);
+
+					var allItems = JSON.parse(allItemsJson);
+
+					var winnerName = winnerInfo['personaname'], winnerAvatar = winnerInfo['avatarfull'];
+
+					var str = '<div class="history-elem">';
+					str += '<img src="' + winnerAvatar + '" class="history-img">';
+					str += '<div class="history-name">' + winnerName + '</div>';
+					str += '<div class="history-price-wrapper">Price: ' + getFormattedPrice(potPrice) + '</div>';
+					str += '<div class="history-chance-wrapper">Chance: ' + percentageChance + '%</div>';
+					str += '<div class="history-all-items">Items won:<br>';
+
+					//Sort all of the items by the price, and if the price is the same, sort it by the name
+					allItems.sort(function (a, b) {
+						return b['itemPrice'] - a['itemPrice'] || a['itemName'].localeCompare(b['itemName']);
+					});
+
+					for (var i2 = 0; i2 < allItems.length; i2++) {
+						var item = allItems[i2];
+
+						var itemName = item['itemName'], itemIcon = item['itemIcon'], itemPrice = item['itemPrice'];
+
+						if (itemName.charAt(0) === '?') {
+							itemName = '&#9733;' + itemName.substring(1);
+						}
+
+						if (itemName.indexOf("Sticker %7C")) {
+							itemIcon = 'http://steamcommunity-a.akamaihd.net/economy/image/' + itemIcon + '/90fx90f';
+						} else {
+							itemIcon = 'http://steamcommunity-a.akamaihd.net/economy/image/' + itemIcon + '/360fx360f';
+						}
+
+						str += '<span title="' + getFormattedPrice(itemPrice) + '"><a href="https://steamcommunity.com/market/listings/730/' + itemName + '" target="_blank"><img src="' + itemIcon + '" class="history-item-img"></a></span>';
+					}
+
+					str += '</div></div>';
+
+					$('#history').append(str);
+
+					$('#load-more').css('display', 'block');
+					$('#load-more').html('Load more&hellip;')
+				}
+
+				if (rounds.length !== 10) {
+					$('#load-more').css('display', 'none');
+				}
+			});
+		});
+	}
+	</script>
 </head>
 <body>
 	<div class="navbar navbar-default navbar-static-top">
@@ -56,7 +231,7 @@
 						</a>
 					</li>
 					<li class="logout" style="display: none;">
-						<p class="navbar-btn" style="margin-right: 10px;">
+						<p class="navbar-btn">
 							<a href="php/SteamAuthentication/steamauth/logout.php" class="btn btn-danger">Logout</a>
 						</p>
 					</li>
@@ -65,128 +240,14 @@
 		</div>
 	</div>
 
-	<!-- Sound effects -->
-	<div>
-		<audio src="sounds/gun-sound.mp3" id="gun-sound"></audio>
+	<div class="container" id="main-container">
+		<div class="row main-row" id="history">
+			<h2 id="history-header">History</h2>
+			<div id="loading">Loading&hellip;</div>
+		</div>
+		<button class="btn btn-success" id="load-more" style="display: none;">Load more&hellip;</button>
 	</div>
 
-	<!-- <h1>NOTE: The site is undergoing maintenance. Please bear with us.</h1> -->
-
-	<div class="container" id="main-container">
-		<div class="row main-row">
-			<div class="col-sm-3">
-				<div style="padding-top: 10px; margin-bottom: 20px;">
-					<div id="topleft-menu">Menu</div>
-					<div class="topleft-link-wrapper logout" style="display: none;">
-						<button class="topleft-link btn btn-primary btn-block" id="change-trade-url-btn"><span class="glyphicon glyphicon-pencil"></span> Change Trade URL</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-info btn-block" data-toggle="modal" data-target="#about-modal"><span class="glyphicon glyphicon-list-alt"></span> About/How it Works</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-warning btn-block" id="support-btn"><span class="glyphicon glyphicon-question-sign"></span> Support</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-default btn-block" id="donate-btn"><span class="glyphicon glyphicon-usd"></span> Donate</button>
-					</div>
-					<div class="topleft-link-wrapper">
-						<button class="topleft-link btn btn-success btn-block" id="history-btn"><span class="glyphicon glyphicon-list"></span> History</button>
-					</div>
-				</div>
-				<div class="bg" style="text-align: center; margin-bottom: 20px;">
-					<h4 style="padding: 0px; margin: 10px 0px;">Previous winner:</h4>
-					<img src="" id="prev-winner-pic" style="width: 150px; height: 150px; border-radius: 5px;">
-					<br>
-					<h4 id="prev-winner-name" style="margin-bottom: "></h4>
-					<h4>
-						Win: <span id="prev-winner-amnt"></span>
-						<br>
-						Chance: <span id="prev-winner-chance"></span>
-					</h4>
-				</div>
-				<div class="bg" style="margin-bottom: 20px;">
-					<div id="chatbox">
-						<div id="chatmessages">Loading chat, please wait&hellip;</div>
-					</div>
-					<input id="chat-input" style="width: 100%; display: none;" placeholder="Send message (press 'Enter' to send)">
-				</div>
-			</div>
-			<div class="col-sm-9">
-				<h2 class="bg" style="padding: 10px; padding-bottom: 0px; margin-top: 10px; margin-bottom: 20px; height: 100%;">
-					As many of you know, Steam has now added a requirement for mobile confirmations when sending trades. So, CSGO Win Big will be down for a couple days, while we edit the bot for this. But, we will be back up soon!
-					<hr>
-					Welcome to <span style="font-weight: bold; /* color: yellow; */">CSGO Win Big</span>! Try your luck and deposit items, and see if you can win big! Good luck and have fun!
-					<br><br>
-					<a href="https://steamcommunity.com/openid/login?openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=checkid_setup&openid.return_to=http%3A%2F%2Fwww.csgowinbig.com%2Fphp%2Fsteam-login-handle.php&openid.realm=http%3A%2F%2Fwww.csgowinbig.com&openid.ns.sreg=http%3A%2F%2Fopenid.net%2Fextensions%2Fsreg%2F1.1&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select" class="btn btn-lg btn-success" id="login-main" style="display: none; margin-bottom: 10px;">
-						<img src="images/steam-logo.png" style="height: 1em;"> Login for your chance to win!
-					</a>
-					<button class="btn btn-lg btn-block btn-success deposit-btn" id="deposit-main" style="display: none; margin-bottom: 10px;">
-						<img src="images/steam-logo.png" style="height: 1em;"> Deposit skins for your chance to win!
-					</button>
-				</h2>
-				<div style="width: 100%; margin-bottom: 20px;">
-					<table style="width: 100%">
-						<tr>
-							<td style="width: 25%; padding-left: 0px; padding-right: 5px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Minimum Deposit:
-									<br>
-									<div class="info">$0.20</div>
-								</div>
-							</td>
-							<td style="width: 25%; padding-left: 5px; padding-right: 5px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Total Games Played:
-									<br>
-									<div class="info" id="total-games-played">&hellip;</div>
-								</div>
-							</td>
-							<td style="width: 25%; padding-left: 5px; padding-right: 5px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Total Money Won:
-									<br>
-									<div class="info" id="total-money-won">&hellip;</div>
-								</div>
-							</td>
-							<td style="width: 25%; padding-left: 5px; padding-right: 0px;">
-								<div class="bg" style="padding: 15px; font-size: 18px;">
-									Biggest Pot Ever:
-									<br>
-									<div class="info" id="biggest-pot-ever">&hellip;</div>
-								</div>
-							</td>
-						</tr>
-					</table>
-				</div>
-				<div class="bg" style="padding: 5px; margin-bottom: 20px;">
-					<div id="pot-items-price" style="display: none; position: relative;">
-						<div class="row">
-							<div class="col-sm-4">
-								<canvas id="items-canvas" width="250" height="250"></canvas>
-								<br>
-								<table cellpadding="0" style="position: absolute; text-align: center; vertical-align: middle; width: 250px; height: 250px; top: 0px; font-size: 35px;">
-									<tr>
-										<td style="padding: 0px;">
-											<span id="pot-items"></span>/60
-											<br>
-											<span id="pot-price"></span>
-											<br>
-											<span id="time-left"></span>
-										</td>
-									</tr>
-								</table>
-							</div>
-							<div class="col-sm-7" style="height: 250px; overflow-x: auto; margin-left: 20px;">
-								<h3 style="text-align: center; margin: 0px; margin-bottom: 5px;">Players:</h3>
-								<table id="users-deposited-table" style="width: 100%;"></table>
-							</div>
-						</div>
-						<hr style="border-top: 1px solid #777;">
-					</div>
-					<div id="pot">&nbsp;loading&hellip;</div>
-				</div>
-			</div>
-		</div>
 	<div class="modal fade" id="about-modal" role="dialog" tabindex="-1">
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
